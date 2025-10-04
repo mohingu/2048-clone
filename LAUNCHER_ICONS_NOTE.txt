@@ -1,0 +1,27 @@
+LAUNCHER ICONS SETUP
+====================
+
+The project currently references launcher icons that need to be created.
+
+To add proper launcher icons:
+
+1. Use Android Studio's Image Asset tool:
+   - Right-click on 'res' folder
+   - New → Image Asset
+   - Choose your icon type and source
+   - Let Android Studio generate all required densities
+
+2. Or manually add PNG files to these directories:
+   - app/src/main/res/mipmap-mdpi/ic_launcher.png (48x48)
+   - app/src/main/res/mipmap-hdpi/ic_launcher.png (72x72)
+   - app/src/main/res/mipmap-xhdpi/ic_launcher.png (96x96)
+   - app/src/main/res/mipmap-xxhdpi/ic_launcher.png (144x144)
+   - app/src/main/res/mipmap-xxxhdpi/ic_launcher.png (192x192)
+
+3. The current setup uses:
+   - A vector drawable for the foreground (ic_launcher_foreground.xml)
+   - Grid background color
+   - Adaptive icon XML files
+
+For now, the app will use the default Android icon. The app will still build and run correctly.
+
