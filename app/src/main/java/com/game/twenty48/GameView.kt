@@ -26,6 +26,10 @@ class GameView @JvmOverloads constructor(
     private var cellSize = 0f
     private var gridMargin = 16f
     private var cellMargin = 8f
+    
+    // Animation for milestone tiles
+    private val pulsatingTiles = mutableMapOf<Tile, Float>() // Tile to scale factor
+    private var pulseAnimator: ValueAnimator? = null
 
     private val backgroundPaint = Paint().apply {
         color = Color.parseColor("#BBADA0")
@@ -80,6 +84,29 @@ class GameView @JvmOverloads constructor(
         gameManager = manager
         invalidate()
     }
+    
+    fun animateMilestoneTile(tile: Tile) {
+        // Add tile to pulsating set
+        pulsatingTiles[tile] = 1.0f
+        
+        // Create pulse animation
+        pulseAnimator?.cancel()
+        pulseAnimator = ValueAnimator.ofFloat(1.0f, 1.2f, 1.0f).apply {
+            duration = 300
+            addUpdateListener { animator ->
+                val scale = animator.animatedValue as Float
+                pulsatingTiles[tile] = scale
+                invalidate()
+            }
+            addListener(object : AnimatorListenerAdapter() {
+                override fun onAnimationEnd(animation: Animator) {
+                    pulsatingTiles.remove(tile)
+                    invalidate()
+                }
+            })
+            start()
+        }
+    }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
@@ -116,7 +143,28 @@ class GameView @JvmOverloads constructor(
         val right = left + cellSize
         val bottom = top + cellSize
 
-        val rect = RectF(left, top, right, bottom)
+        // Apply pulse animation if this tile is pulsating
+        val scale = if (tile != null && pulsatingTiles.containsKey(tile)) {
+            pulsatingTiles[tile] ?: 1.0f
+        } else {
+            1.0f
+        }
+
+        val rect = if (scale != 1.0f) {
+            // Calculate scaled rectangle centered on original position
+            val centerX = (left + right) / 2
+            val centerY = (top + bottom) / 2
+            val scaledWidth = cellSize * scale
+            val scaledHeight = cellSize * scale
+            RectF(
+                centerX - scaledWidth / 2,
+                centerY - scaledHeight / 2,
+                centerX + scaledWidth / 2,
+                centerY + scaledHeight / 2
+            )
+        } else {
+            RectF(left, top, right, bottom)
+        }
 
         if (tile == null) {
             canvas.drawRoundRect(rect, 4f, 4f, cellPaint)
@@ -128,13 +176,13 @@ class GameView @JvmOverloads constructor(
 
             textPaint.color = if (tile.value <= 4) Color.parseColor("#776E65") else Color.WHITE
             textPaint.textSize = when {
-                tile.value < 100 -> cellSize * 0.5f
-                tile.value < 1000 -> cellSize * 0.4f
-                else -> cellSize * 0.35f
+                tile.value < 100 -> cellSize * 0.5f * scale
+                tile.value < 1000 -> cellSize * 0.4f * scale
+                else -> cellSize * 0.35f * scale
             }
 
-            val centerX = left + cellSize / 2
-            val centerY = top + cellSize / 2 - (textPaint.descent() + textPaint.ascent()) / 2
+            val centerX = rect.centerX()
+            val centerY = rect.centerY() - (textPaint.descent() + textPaint.ascent()) / 2
 
             canvas.drawText(tile.value.toString(), centerX, centerY, textPaint)
         }
