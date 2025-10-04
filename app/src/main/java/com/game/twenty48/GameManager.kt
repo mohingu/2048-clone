@@ -2,7 +2,8 @@ package com.game.twenty48
 
 class GameManager(
     val size: Int = 4,
-    private val onStateChanged: () -> Unit
+    private val onStateChanged: () -> Unit,
+    private val soundManager: SoundManager? = null
 ) {
     private val grid = Grid(size)
     var score = 0
@@ -50,6 +51,7 @@ class GameManager(
         val vector = getVector(direction)
         val traversals = buildTraversals(vector)
         var moved = false
+        var merged = false
 
         prepareTiles()
 
@@ -62,21 +64,28 @@ class GameManager(
 
                     if (next != null && next.value == tile.value && next.mergedFrom == null) {
                         // Merge tiles
-                        val merged = Tile(tile.value * 2, positions.second.first, positions.second.second)
-                        merged.mergedFrom = Pair(tile, next)
+                        val mergedTile = Tile(tile.value * 2, positions.second.first, positions.second.second)
+                        mergedTile.mergedFrom = Pair(tile, next)
 
-                        grid.insertTile(merged)
+                        grid.insertTile(mergedTile)
                         grid.removeTile(tile)
 
                         tile.updatePosition(positions.second.first, positions.second.second)
 
-                        score += merged.value
+                        score += mergedTile.value
 
-                        if (merged.value == 2048) {
+                        // Check for milestones
+                        if (mergedTile.value in listOf(256, 512, 1024, 2048)) {
+                            soundManager?.playMilestoneSound(mergedTile.value)
+                            soundManager?.vibrateMilestone(mergedTile.value)
+                        }
+
+                        if (mergedTile.value == 2048) {
                             won = true
                         }
 
                         moved = true
+                        merged = true
                     } else {
                         moveTile(tile, positions.first.first, positions.first.second)
                         if (tile.row != row || tile.col != col) {
@@ -88,10 +97,20 @@ class GameManager(
         }
 
         if (moved) {
+            // Play appropriate sound
+            if (merged) {
+                soundManager?.playMergeSound()
+            } else {
+                soundManager?.playMoveSound()
+            }
+            
             addRandomTile()
 
             if (!movesAvailable()) {
                 over = true
+                soundManager?.playGameOverSound()
+            } else if (won) {
+                soundManager?.playWinSound()
             }
 
             onStateChanged()
