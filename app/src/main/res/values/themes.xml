@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Twenty48" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
+        <item name="colorPrimary">#BBADA0</item>
+        <item name="colorPrimaryDark">#8F7A66</item>
+        <item name="colorAccent">#8F7A66</item>
+        <item name="android:windowBackground">#FAF8EF</item>
+    </style>
+</resources>
+
